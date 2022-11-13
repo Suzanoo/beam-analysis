@@ -18,7 +18,7 @@ ui = ui.page_fluid(
             ui.input_action_button("button1", "Submit 1", class_="btn-primary"),
 
             ui.hr(),
-            ui.input_text(id="support", label='Define support type, fixed : 0, pinned : 1, free : 2',
+            ui.input_text(id="support", label='Define support type, fixed=0, roller=1, pinned=2, free=3',
                 placeholder='ex. 0, 1, 1, 2', value=None),
             ui.input_action_button("button2", "Submit 2", class_="btn-primary"),
 
@@ -54,8 +54,6 @@ ui = ui.page_fluid(
             ui.output_plot(id="plot",)
         )
     )
-
-    
 )
 
 def server(input, output, session):
@@ -86,9 +84,9 @@ def server(input, output, session):
             App.close()
 
         for s in support:
-            if s not in [0, 1, 2] :
+            if s not in [0, 1, 2, 3] :
                 # TODO aleart!
-                print('support type not in [0, 1, 2]')
+                print('support type not in [0, 1, 2, 3]')
                 App.close()
                 break
             else:

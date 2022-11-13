@@ -11,8 +11,8 @@ import scipy.integrate as integrate
 np.set_printoptions(precision=3)
 
 #=========================================================================================
-###Preprocess
-#Bernoulli beam
+# Preprocess
+## Bernoulli beam
 class BeamB:
     '''We define a beam section.
      E: Modulus of elasticity
@@ -28,14 +28,14 @@ class BeamB:
         self.I = I
         self.L = L
         
-        #Element stiffness matrix
+        # Element stiffness matrix
         self.k = E * I / L**3 * np.array([
                 [12., 6*L, -12, 6*L],
                 [6*L, 4*L**2, -6*L, 2*L**2],
                 [-12, -6*L, 12, -6*L],
                 [6*L, 2*L**2, -6*L, 4*L**2]
             ])
-#Loads Name
+## Loads Name
 class Load:
     '''Clase Load'''
     def __init__(self, type):
@@ -56,7 +56,7 @@ class Load:
         else:
             print('Undefined')
 
-#Point Load
+## Point Load
 class PointLoad(Load):
     '''Point load class'''
     def __init__(self, P=0, a=0):
@@ -68,10 +68,10 @@ class PointLoad(Load):
         self.a = a
     
     def __str__(self):
-        return 'Point Load\n   Value = ' + str(self.P) + 'N' \
-    + '\n   Position, x = ' + str(self.a) + 'm'
+        return 'Point Load\n   Value= ' + str(self.P) + 'N' \
+    + '\n   Position, x= ' + str(self.a) + 'm'
     
-    #Qf = [Fy1, M1, Fy2, M2, ...]
+    # Qf = [Fy1, M1, Fy2, M2, ...]
     def Qf(self, L):
         '''Equivalent nodal reactions for a point Load.
          L: Beam length'''
@@ -84,7 +84,7 @@ class PointLoad(Load):
                 [-a**2 * b]
             ])
     
-    #Shear force in a section (beam without supports)
+    # Shear force in a section (beam without supports)
     def FQ(self, x, L):
         '''Contribution to the shear force in a section due to a point Load,
          x: position of the section considered with respect to the extreme left
@@ -94,7 +94,7 @@ class PointLoad(Load):
         else:
             return 0
          
-    #Bending moment in a section (simply supported beam)
+    # Bending moment in a section (simply supported beam)
     def MF(self, x, L):
         '''Contribution to the bending moment in a section due to a punctual Load,
          x: position of the section considered with respect to the extreme left
@@ -120,10 +120,10 @@ class DistributedLoad(Load):
         self.l = l
     
     def __str__(self):
-        return 'Load distribution\n   Value = ' + str(self.q) + 'N/m'\
-    ', ' + '\n   Beginning = ' + str(self.a) + 'm' + '\n   Longitud = ' + str(self.l) + 'm'
+        return 'Load distribution\n   Value= ' + str(self.q) + 'N/m'\
+    ', ' + '\n   Beginning= ' + str(self.a) + 'm' + '\n   Longitud= ' + str(self.l) + 'm'
     
-    #Qf = [Fy1, M1, Fy2, M2,...]
+    # Qf = [Fy1, M1, Fy2, M2,...]
     def Qf(self, L):
         '''Equivalent Nodal Reactions for a Load
          evenly distributed.
@@ -138,7 +138,7 @@ class DistributedLoad(Load):
                 [-L/6*(1 - a**3/L**4*(4*L - 3*a) - b**2/L**4*(6*L**2 - 8*b*L + 3*b**2))]
             ])
             
-    #Shear force in a section (unsupported beam)
+    # Shear force in a section (unsupported beam)
     def FQ(self, x, L):
         '''Contribution to the shear force in a section due to the distributed load.
          x: position of the section considered with respect to the extreme left
@@ -150,7 +150,7 @@ class DistributedLoad(Load):
         else:
             return 0
     
-    #Bending moment in a section (simply supported beam)
+    # Bending moment in a section (simply supported beam)
     def MF(self, x, L):
         '''Contribution to the shear force in a section due to the distributed load.
          x: position of the section considered with respect to the extreme left
@@ -178,10 +178,10 @@ class MomentConcentrated(Load):
         self.a = a
     
     def __str__(self):
-        return 'Moment concentrate\n   Value = ' + str(self.M) + 'N-m' \
-    + '\n   Posición, x = ' + str(self.a) + 'm'
+        return 'Moment concentrate\n   Value= ' + str(self.M) + 'Nm' \
+    + '\n   Posición, x= ' + str(self.a) + 'm'
     
-    #[Fy1, M1, Fy2, M2,...]
+    # Qf = [Fy1, M1, Fy2, M2,...]
     def Qf(self, L):
         '''Equivalent nodal reactions for a concentrated moment.
          L: beam length'''
@@ -194,13 +194,13 @@ class MomentConcentrated(Load):
                 [a*(a - 2*b)]
             ])
     
-    #Shear force in a section (beam without supports)
+    # Shear force in a section (beam without supports)
     def FQ(self, x, L):
         '''Contribution to the shear force in a section due to the distributed load.
          x: position of the section considered with respect to the extreme left'''
         return 0
     
-    #Bending moment in a section (simply supported beam)
+    # Bending moment in a section (simply supported beam)
     def MF(self, x, L):
         '''Contribution to the bending moment in a section due to a concentrated moment,
          These values correspond to that of a simply supported beam.
@@ -214,46 +214,52 @@ class MomentConcentrated(Load):
             return 0
 
 #=========================================================================================
-###Method
-#displacement matrix : di = ['d1y', 'θ1', 'd2y', 'θ2', 'd3y', 'θ3',...]
+# Method
+## displacement matrix : di = ['d1y', 'θ1', 'd2y', 'θ2', 'd3y', 'θ3',...]
 def d_matrix(list_of_suport):
+    # "0" : "Embedement",
+    # "1" : "Allows vertical scroll",
+    # "2" : "Allow rotation but no scroll",
+    # "3" : "Cantilever"
     d = []
     for i in range(0,len(list_of_suport)):
-        dy, θ = 0, 0
-        if list_of_suport[i] == 0:#displacement of fixed support
-            d.append(dy)
-            d.append(θ)
-        elif list_of_suport[i] == 1:#displacement of pin support
-            θ = 'θ'+str(i+1)
-            d.append(dy)
-            d.append(θ)
-        elif list_of_suport[i] == 2:#displacement of free support
-            dy = 'd'+str(i+1)
-            θ = 'θ'+str(i+1)
-            d.append(dy)
-            d.append(θ)
+        if list_of_suport[i] == 0: # fixed
+            d.append(0)
+            d.append(0)
+        elif list_of_suport[i] == 1: # vert-scroll
+            d.append('d'+str(i+1))
+            d.append(0)
+        elif list_of_suport[i] == 2: # pin
+            d.append(0)
+            d.append('θ'+str(i+1))
+        elif list_of_suport[i] == 3: # free
+            d.append('d'+str(i+1))
+            d.append('θ'+str(i+1))
+        else:
+            pass
 
     print(f"\nNodal displacement matrix \nd = {d}")
     return d
     
-#Reaction matrix : R = ['F1y', 'M1', 'F2y', 'M2', 'F3y', 'M3',...]
+## Reaction matrix : R = ['F1y', 'M1', 'F2y', 'M2', 'F3y', 'M3',...]
 def R_matrix(list_of_suport, R0):
     R = []
-    for i in range(0,len(list_of_suport)):
-        Fy, M = 0, 0
-        if list_of_suport[i] == 0:# reaction of fixed support
-            Fy = 'F'+str(i+1)
-            M = 'M'+str(i+1)
-            R.append(Fy)
-            R.append(M)
-        elif list_of_suport[i] == 1:# reaction of pin support
-            Fy = 'F'+str(i+1)
-            R.append(Fy)
-            R.append(M)
-        elif list_of_suport[i] == 2:# reaction of free support
-            R.append(Fy)
-            R.append(M)
-    
+    for i in range(0, len(list_of_suport)):
+        if list_of_suport[i] == 0:# fixed
+            R.append('F'+str(i+1))
+            R.append('M'+str(i+1))
+        elif list_of_suport[i] == 1: # vert-roller
+            R.append(0)
+            R.append('M'+str(i+1))
+        elif list_of_suport[i] == 2: # pinned
+            R.append('F'+str(i+1))
+            R.append(0)
+        elif list_of_suport[i] == 3: # free
+            R.append(0)
+            R.append(0)
+        else:
+            pass
+
     if len(R0) != 0:
         for i in range(0, len(R)):
             if R0[i] != 0:
@@ -262,8 +268,8 @@ def R_matrix(list_of_suport, R0):
     print(f"\nNodal reaction matrix \nR = {R}") 
     return R
 
-#Stiffness matrix
-#Assembly of the global stiffness matrix
+## Stiffness matrix
+## Assembly of the global stiffness matrix
 def global_stiffness(nodes, spans, stretch):
     K = np.zeros((2*nodes, 2*nodes))
     for i in range(spans):
@@ -273,27 +279,27 @@ def global_stiffness(nodes, spans, stretch):
     
     return K
 
-# Fixed End Force
-# Local fixed end force
+## Fixed-End Force
+# Local fixed-end force
 # Equivalent nodal reactions in each stretch
-def local_FEF(spans, loads, stretch):
-    QF = [0]*spans #to save the equivalent nodal reaction vectors of each stretch
-    for i in range(spans): #go through all the stretches
-        for j in range(len(loads[i])): #consider all the loads of each stretch
+def local_FEF(b, loads, stretch): # b = Number of stretchs or bars
+    QF = [0]*b # placholder to save the equivalent nodal reaction vectors of each stretch
+    for i in range(b): # go through all the stretches
+        for j in range(len(loads[i])): # consider all the loads of each stretch
             QF[i] += loads[i][j].Qf(stretch[i].L)
 
     return QF
 
-#Assembbly the global fixed end force
-def global_FEF(nodes, spans, QF):
-    Qf = np.zeros((2*nodes,1))
-    for i in range(spans):
+## Assembly the global fixed-end force
+def global_FEF(nodes, b, QF): # b = Number of stretchs or bars
+    Qf = np.zeros((2*nodes, 1))
+    for i in range(b):
         Qf[2*i:2*i+4,:] += QF[i]
     print(f"\nGlobal Fixend Force, Qf :")
     print(f"{Qf}")
     return Qf
 
-#Calculated unknown displacement
+# Calculated unknown displacement
 # If we know R, we don't know d.
 # If we know d, we don't know R.
 # [Ri] = [Ki][di]+[Qfi]
@@ -306,28 +312,28 @@ def displacement(d, K, Qf, R):
        Qf : np.array of global FEF
        R = list of nodal external force/reaction       
     '''
-    # index of unknowm displacement
+    #index of unknowm displacement
     J = np.where(np.array(d) != '0')[0].tolist()
     
-    # index of reaction matched unknowm displacement
+    #index of reaction matched unknowm displacement
     I = J 
 
-    R1 = np.zeros((len(J),1), dtype=float) #---> Matrix [Ri]
+    R1 = np.zeros((len(J),1), dtype=float) #--->Matrix [Ri]
 
-    # Assembly Ki matched index
+    #Assembly Ki matched index
     K1 = np.zeros((len(I), len(J)))
     for i in range(0,len(I)):
         for j in range(0,len(J)):
             K1[i][j] = K[I[i]][J[j]] #--->Matrix [Ki]
 
-    #Assembly Qfi index
+    # Assembly Qfi index
     Q01 = []
     for item in I:
         q01 = [Qf[item][0]]
         Q01.append(q01)    
     Q01 = np.array(Q01) #--->Matrix [Qfi] 
     
-    #Assembly R index 
+    # Assembly R index 
     for i in range(0, len(I)):
         R1[i][0] = (R[I[i]])
 
@@ -340,8 +346,8 @@ def displacement(d, K, Qf, R):
 
     return di #disp = m, θ = radian 
 
-#Calculated Nodal Reaction
-#[R] = [K][d] + [Qf]
+# Calculated Nodal Reaction
+# [R] = [K][d] + [Qf]
 def reaction(d, di, K, Qf):
 
     # index of d where di will be added
@@ -356,7 +362,8 @@ def reaction(d, di, K, Qf):
     print(f"Nodal Displacement, [d] : d1, θ1, d2, θ2, ...:")
     print(f"{dy} m, radian, m, radian,...")
     
-    #Calculated nodal reaction
+    
+    # Calculated nodal reaction
     R = np.dot(K, dy) + Qf #dot matrix
     
     print(f"\nExternal Force/Nodal Reaction, [R] : F1, M1, F2, M2, ... :")
@@ -364,20 +371,20 @@ def reaction(d, di, K, Qf):
     print(f"{R/1000} kN, kN-m, kN, kN-m,...")
     return dy, R
 
-#Calculated internal force
+# Calculated internal force
 def internal_force(dy, b, QF, stretch):
     """
     dy : np.array of displacement 
     b : spans q'ty
     QF : local FEF
     """
-    #Nodal displacements by stretch
+    # Nodal displacements by stretch
     u = []
     for i in range(b):
         u.append(dy[2*i:2*i+4,:])
         # print(f"Local displacement: span {i+1} = {u[-1]} m, radian, m, radian,...")
     
-    #Forces in each stretch
+    # Forces in each stretch
     # [Fi] = [ki][ui]+[QFi]
     F = []
     for i in range(b):
@@ -386,29 +393,28 @@ def internal_force(dy, b, QF, stretch):
         
     return u, F
 
-#Shear force values
+# Shear force values
 def xi_coordinate(spans, stretch):   
-    #Number of sections to take for the graphics in each stretch
-    numS = 1000
-    Xt = [] #to save the x of each stretch
+    numS = 1000 
+    Xt = [] 
     for i in range(spans):
-        Xt.append(np.linspace(0, stretch[i].L, numS)) #Sections location
+        Xt.append(np.linspace(0, stretch[i].L, numS)) # 1000 points in each stretch
     return numS, Xt
 
 def shears(spans, stretch, loads, F):
     numS, Xt = xi_coordinate(spans, stretch)
     Shears = []
-    for i in range(spans): #for each stretch
+    for i in range(spans): # for each stretch
 
-        #Shear like unsupported beams(Internal Shear)
-        Q0 = np.zeros(numS) #y-y axis
-        for j in range(len(loads[i])): #consider all the loads of each stretch
-            m = 0 #para enumerar las secciones
-            for x in Xt[i]: #to list the sections
-                Q0[m] += loads[i][j].FQ(x, stretch[i].L) #Calculate Qi given xi
+        # Shear like unsupported beams(Internal Shear)
+        Q0 = np.zeros(numS) 
+        for j in range(len(loads[i])): # consider all the loads of each stretch
+            m = 0 # para enumerar las secciones
+            for x in Xt[i]: # to list the sections
+                Q0[m] += loads[i][j].FQ(x, stretch[i].L) # Calculate Qi given xi
                 m += 1
 
-        #Shear at the extreme left, obtained from the calculation
+        # Shear at the extreme left, obtained from the calculation
         Q1 = F[i][0]
 
         #Total shear
@@ -558,12 +564,19 @@ def plot(lb, spans, Ltotal, stretch, DFQ, maxShear, minShear, XmaxQ, XminQ):
 #                      + '$m$')
                      
            #Plot For unit in kN, kN-m
-            plt.text(ubicMax, maxShear[i]/1000*1.1, lb[2] + \
+            plt.text(ubicMax, maxShear[i]/1000*1.1,\
                      str(round(maxShear[i]/1000,2)) + lb[-1] + str(round(ubicMax,2)) \
                      + '$m$')
-            plt.text(ubicMin, minShear[i]/1000*1, lb[3] + \
+            plt.text(ubicMin, minShear[i]/1000*1, \
                      str(round(minShear[i]/1000,2)) + lb[-1] + str(round(ubicMin,2)) \
                      + '$m$')
+            # TODO do not printtext of 0 value
+            # plt.text(ubicMax, maxShear[i]/1000*1.1, lb[2] + \
+            #          str(round(maxShear[i]/1000,2)) + lb[-1] + str(round(ubicMax,2)) \
+            #          + '$m$')
+            # plt.text(ubicMin, minShear[i]/1000*1, lb[3] + \
+            #          str(round(minShear[i]/1000,2)) + lb[-1] + str(round(ubicMin,2)) \
+            #          + '$m$')
 
     colocarTextosQ(lb)
 
@@ -588,32 +601,24 @@ def plot(lb, spans, Ltotal, stretch, DFQ, maxShear, minShear, XmaxQ, XminQ):
 ####
 def main(E, I, spans, s, loads, R0):
     
-    ##User input
     print("PROPERTIES :")
-    #https://en.wikipedia.org/wiki/Young%27s_modulus
-    # E = 200 # Es, GPa
-    # https://optimalbeam.com/section-properties.php 
-    # I = 252*10e-8 #m4
-    print(f"E = {E:.0f} GPa, I = {I:.6f} m4")
+    print(f"E = {E*1e-9:.2f} GPa, I = {I:.2f} m4")
 
     #----------------------------------------------------
     print(f"\nGEOMETRY :")
     #Define length of each span
-    ##User input
-    # spans = [6, 1]
     for i in range(len(spans)):
         print(f"Span {i+1} : {spans[i]} m")
 
     #----------------------------------------------------
     print(f"\nSUPPORT :")
     support = {
-        "0" : "Fixed",
-        "1" : "Pin",
-        "2" : "Free"
+        "0" : "Embedement",
+        "1" : "Allows vertical scroll",
+        "2" : "Allow rotation but no scroll",
+        "3" : "Cantilever"
     }
     #Define list of support type
-    ##User input
-    # s = [1, 1, 2] 
     leftSupport = s[0]
     rightSupport = s[-1]
     for i in range(len(spans)+1):
@@ -621,17 +626,16 @@ def main(E, I, spans, s, loads, R0):
 
     #----------------------------------------------------
     print(f"\nNODAL EXTERNAL FORCE, Ro :")
-    #Define known/unknown vector of external force/reaction (+Up, -Down)
-    #R0 = ['F1y', 'M1', 'F2y', 'M2', 'F3y', 'M3',...]
-    ##User input
-    # R0 = [0, 0, 0, 0, 0, 0] #N, N-m
+    # Define known/unknown vector of external force/reaction (+Up, -Down)
+    # R0 = ['F1y', 'M1', 'F2y', 'M2', 'F3y', 'M3',...]
+    # ex. R0 = [0, 0, 0, 0, 0, 0] #N, N-m
     print(f"[Ro] = ['F1y', 'M1', 'F2y', 'M2', 'F3y', 'M3',...]")
     print(f"[Ro] = {R0}  N, N-m...")
 
     #----------------------------------------------------
     print(f"\nBERNOULLI BEAM :")
-    #Define the stretchs of the continuous beam in a list
-    #BeamB(Elasticity, Inertia, Length) for each stretch
+    # Define the stretchs of the continuous beam in a list
+    # BeamB(Elasticity, Inertia, Length) for each stretch
     stretch = []
     for i in range(len(spans)):
         st = BeamB(E, I, spans[i]) 
@@ -641,26 +645,23 @@ def main(E, I, spans, s, loads, R0):
 
     #----------------------------------------------------
     print(f"\nLOAD:")
-    #Define loads in each stretch
-    #q = DistributedLoad (value, start, length), distance between the left end of the span and the start of the load, Down+ Up-
-    #P = PointLoad(value, position), Load position with respect to the left end of the section, Down+ Up-
-    #M = MomentConcentrated (value, position), position of the moment with respect to the left end of the section', counterclockwise+
-
-    ##User input
-    #provide load: unit in --> Newton, N
+    # Define loads in each stretch
+    # q = DistributedLoad (value, start, length), distance between the left end of the span and the start of the load, Down+ Up-
+    # P = PointLoad(value, position), Load position with respect to the left end of the section, Down+ Up-
+    # M = MomentConcentrated (value, position), position of the moment with respect to the left end of the section', counterclockwise+
     
-    #print load
+    # print load
     for i in range(0, len(loads)):
         print(f'Load in stretch {i+1} : ')
         print(*loads[i], sep = "\n")
 
-    #Number of stretchs or bars
+    # Number of stretchs or bars
     b = len(stretch)
 
-    #Number of nodes
+    # Number of nodes
     nodes = b + 1
 
-    #Total length of the beam
+    # Total length of the beam
     Ltotal = 0
     for i in range(b):
         Ltotal += stretch[i].L
@@ -695,7 +696,7 @@ def main(E, I, spans, s, loads, R0):
     DMF, maxMoment, minMoment, XmaxF, XminF = moments(b, stretch, loads, F)
 
     #plot diagram 
-    fig = plt.figure(1)
+    plt.figure(1)
     #plot
     plt.subplot(211) #2 rows, 1 column, first position
     plt.margins(2)
@@ -709,19 +710,41 @@ def main(E, I, spans, s, loads, R0):
     plt.subplots_adjust(hspace=0.5)
     plt.show()
 
-    # ask = input('Save image? Y|N : ').upper()
-    # if ask == 'Y':
-    #     plt.figure().savefig('Data/test.png')
+    ask = input('Save image? Y|N : ').upper()
+    if ask == 'Y':
+        plt.figure().savefig('Data/test.png')
 
     print("=========================================================================================")
     print("If you have any comment, pls contact me at highwaynumber12@gmail.com")
 
-    return fig
-
 #=========================================================================================
-'''
-How to used?
+### PLAY GROUND ###
+##  Example from URL : https://learnaboutstructures.com/sites/default/files/images/3-Frames/Det-Beam-Example-Moment.png 
+##  Recheck :  https://platform.skyciv.com/beam
+### comment out all below to run code ###
 
-for shiny app --> see app.py
-for normal use --> see beam_analysis_input.py
-'''
+E = 200e9 #Es, GPa 
+I = 112e-8 #m4
+
+spans = [.5, 3.25, 3.25, .5]
+support = [3, 2, 2, 2, 3]
+R0 = [0,0,  0,0,  0,0  ,0,0, 0,0]
+
+# Load in stretch 1
+# P1 = PointLoad(20000, 5)#, Down+ Up-
+# m1 = MomentConcentrated(-30000, 5)#counterclockwise +
+
+q1 = DistributedLoad(500, 0, .5)#, Down+ Up-
+q2 = DistributedLoad(500, 0, 3.25)#, Down+ Up-
+q3 = DistributedLoad(500, 0, 3.25)#, Down+ Up-
+q4 = DistributedLoad(500, 0, .5)#, Down+ Up-
+
+
+f1 = [q1] # Load in stretch 1
+f2 = [q2] # Load in stretch 2
+f3 = [q3] # Load in stretch 3...
+f4 = [q4]
+loads = [f1, f2, f3, f4]
+
+if __name__ == '__main__':
+    main(E, I, spans, support, loads, R0)

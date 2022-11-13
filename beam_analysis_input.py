@@ -40,15 +40,15 @@ def analysis():
 
     #--------------------------------------------------------------------
     ## Support type
-    s = []
+    supports = []
     print(f'\nDefine support type for each node. You have {len(spans)+1} nodes')
     for i in range(1, len(spans)+2):
         while True:
             try:
-                x = int(input(f'Define support type for node {i} --> fixd:0, pin:1, free:2 : '))
-                if x in (0, 1, 2):
-                    s.append(x)
-                    print(f"support type = {s}") 
+                x = int(input(f'Define support type for node {i} --> fixd=0, vert-scroll=1, pin=2, free=3 : '))
+                if x in [0, 1, 2, 3]:
+                    supports.append(x)
+                    print(f"support type = {supports}") 
                     break  
                 else:
                     print('Badly input.Try again')
@@ -63,9 +63,9 @@ def analysis():
     Finaly we have [R0] = ['F1y', 'M1', 'F2y', 'M2', 'F3y', 'M3',...]
     '''
     R0 = []
-    print(f'\nDefine external loads(R0) at each node. You have {len(s)} nodes')
+    print(f'\nDefine external loads(R0) at each node. You have {len(supports)} nodes')
 
-    for i in range(1, len(s)+1):
+    for i in range(1, len(supports)+1):
         while True:
             try:    
                 f = float(input(f'Define Fy(kN) for node {i} Up-, Down+ : '))     
@@ -121,7 +121,7 @@ def analysis():
                 print('Badly input.Try again')
         print('#---------------------------------------------')
 
-    return spans, s, loads, R0
+    return spans, supports, loads, R0
         
 ##Call 
 def main(_argv):
@@ -135,14 +135,10 @@ if __name__ == '__main__':
 #--------------------------------------------------------------------
 '''
 How to used?
-1.Install Python
-2.Install Anaconda --> https://docs.anaconda.com/anaconda/install/index.html
-3.Create conda env --> e.g. % conda create --name my_env python=3.10
-4.Activate conda env --> e.g. % conda activate my_env
-5.Install package
-    $ pip install -r requirements.txt
+-Please see FLAGS definition for unit informations
+-Make sure you are in the project directory run python in terminal(Mac) or command line(Windows)
 
-6.Run app with flag I     
-    % python beam_analysis_input.py --I=0.0011
+-Run app with flag I (moment of inertia)   
+    % python tools/beam_analysis_input.py --I=0.0011
 
 '''
